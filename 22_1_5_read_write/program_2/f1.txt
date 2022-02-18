@@ -1,0 +1,3 @@
+Hello, I am Soumyadip Payra, a pre-final year student at the National Institute of Technology
+Warangal majoring in Computer Science and Engineering. My domain of research is Machine Learning especially,
+Computer Vision and Neural Architecture Search.

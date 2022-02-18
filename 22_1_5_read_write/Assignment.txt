@@ -1,0 +1,12 @@
+Assignments :
+Have to get practiced with essential 'file' system calls of Unix.
+open() , read() , write () , lseek (), etc, and some more of your choice..
+
+1. create two sorted files f1 , f2 with numbers and merge them into another sorted file f3.
+Should use the open() , read() , write () , lseek () only for file operations.
+
+2. Create f1 as a text file. Read contents of f1 and capitalize each word of f1 and write it into f2.
+
+3. Create f1 as a text file wich will contain both numbers and text  intermixed.  Write into a single file f2 with
+text ( strings) at first and then numbers next. You have to read(scan through) f1 only once. 
+You can write the numbers in f2 starting at the location of the 1000th . ( means have to use lseek() )
