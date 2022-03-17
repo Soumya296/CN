@@ -1,7 +1,7 @@
 #include "networks.h"
 #include <time.h>
-#define address1 "socket1"
-#define address2 "socket2"
+#define ADDRESS "mysocket" 
+#define ADDRESS2 "mysocket2"
 
 using namespace std;
 
@@ -109,7 +109,7 @@ int main()
 	 perror("\nsocket "); 
 	bzero(&userv_addr,sizeof(userv_addr)); 
 	userv_addr.sun_family = AF_UNIX; 
- 	strcpy(userv_addr.sun_path, address1); 
+ 	strcpy(userv_addr.sun_path, ADDRESS); 
 	userv_len = sizeof(userv_addr); 
  	if(connect(usfd,(struct sockaddr *)&userv_addr,userv_len)==-1) 
  		perror("\n connect "); 
@@ -123,15 +123,15 @@ int main()
 	bzero(&userv_addr,sizeof(userv_addr));
 	
 	userv_addr.sun_family = AF_UNIX;
-	strcpy(userv_addr.sun_path, address2);
-	unlink(address2);
+	strcpy(userv_addr.sun_path, ADDRESS2);
+	unlink(ADDRESS2);
 	userv_len = sizeof(userv_addr);
 	if(bind(usfd1, (struct sockaddr *)&userv_addr, userv_len)==-1)
 		perror("server:bind");
 	socklen_t ucli1_len;
 	listen(usfd1,5);	
     int fd=recv_fd(usfd);
-    printf("ball recieved from baller : %d\n",fd);
+    printf("ball bowled from Bowler : %d\n",fd);
 
     char su[1000];
     int umpire_fd=fileno(popen("pidof ./umpire","r"));

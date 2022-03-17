@@ -2,7 +2,7 @@
 using namespace std;
 
 int main(){
-    int x;
+   int x;
     cout<<"enter bearing number of fielder "<<endl;
     cin>>x;
     int rsfd=socket(AF_INET, SOCK_RAW, 2);	

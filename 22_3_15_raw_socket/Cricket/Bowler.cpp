@@ -1,6 +1,6 @@
 #include "networks.h"
-#define address1 "socket1"
-#define address2 "socket2"
+#define ADDRESS "mysocket" 
+#define ADDRESS1 "mysocket1"
 
 using namespace std;
 int recv_fd(int socket) 
@@ -101,28 +101,26 @@ int main()
 	bzero(&userv_addr,sizeof(userv_addr));
 	
 	userv_addr.sun_family = AF_UNIX;
-	strcpy(userv_addr.sun_path, address1);
-	unlink(address1);
+	strcpy(userv_addr.sun_path, ADDRESS);
+	unlink(ADDRESS);
 	userv_len = sizeof(userv_addr);
 	if(bind(usfd, (struct sockaddr *)&userv_addr, userv_len)==-1)
 		perror("server:bind");
 	socklen_t ucli_len;
 	listen(usfd,5);	
     int nusfd1= accept(usfd, (struct sockaddr*)&ucli_addr, &ucli_len);
-
     int fd = open("ball.txt", O_RDONLY | O_CREAT);
-    cout<<"Ball is represented with the FIle Descriptor: "<<fd<<endl;
-
+    cout<<"fd to represent ball "<<fd<<endl;
     /*Sending File descriptor to batsman*/
     send_fd(nusfd1,fd);
     cout<<"bowled to batsman"<<endl;
 
-	/*Notifying the umpire*/
+	// /*Notifying the umpire*/
 	char su[1000];
-    int umpire_fd=fileno(popen("pidof ./umpire","r"));
-    read(umpire_fd,&su,1000);
-    int pid3=atoi(su);
-    kill(pid3,SIGUSR2);
+	int umpire_fd=fileno(popen("pidof ./umpire","r"));
+	read(umpire_fd,&su,1000);
+	int pid3=atoi(su);
+	kill(pid3,SIGUSR2);
 
     /*Connecting to the Umpire*/
     int usfd1 = socket(AF_UNIX, SOCK_STREAM, 0); 
@@ -130,7 +128,7 @@ int main()
 	 perror("\nsocket "); 
 	bzero(&userv_addr,sizeof(userv_addr)); 
 	userv_addr.sun_family = AF_UNIX; 
- 	strcpy(userv_addr.sun_path, address2); 
+ 	strcpy(userv_addr.sun_path, ADDRESS1); 
 	userv_len = sizeof(userv_addr); 
  	if(connect(usfd1,(struct sockaddr *)&userv_addr,userv_len)==-1) 
  		perror("\n connect "); 
