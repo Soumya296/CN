@@ -30,7 +30,7 @@ void handler_USR1(int sifid, siginfo_t *info, void *context)
 
 void handler_USR2(int sifid, siginfo_t *info, void *context)
 {
-    JUDGE_COUNT = 1;
+    JUDGE_COUNT++;
 }
 
 int main()
