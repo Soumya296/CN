@@ -21,13 +21,14 @@ int SERVICE = 0;
 
 void * service(void * fd)
 {
-    int nsfd = * (int *) fd;
+    printf("thread service...\n");
+    int nsfd = *(int*) fd;
     char buf[MAX];
     int sz;
     while(1)
     {
-        // send(nsfd,"rand",strlen("rand"),0);
         if(SERVICE == 0) break;
+        if(send(nsfd,"hi",strlen("hi"),0)<0) printf("Sending faield\n");
         recv(nsfd,buf,MAX,0);
         printf("From %s\n",buf);
     }
@@ -130,16 +131,6 @@ int main()
     }
     else printf("\nConnection to Server Successful\n");
 
-    char buf[MAX];
-    while(1)
-    {
-        recv(as_sfd,buf,MAX,0);
-        if(strncmp(buf,"AS",2)==0) break;
-    }
-
-    SERVICE = 1;
-    int nsfd[2];
-
     /*Unix Domain Sockets*/
     int usfd;
     struct sockaddr_un userv_addr;
@@ -151,6 +142,19 @@ int main()
     userv_addr.sun_family = AF_UNIX;
     strcpy(userv_addr.sun_path, ADDRESS);
     userv_len = sizeof(userv_addr);
+    
+
+    char buf[MAX];
+    while(1)
+    {
+        recv(as_sfd,buf,MAX,0);
+        if(strncmp(buf,"AS",2)==0) break;
+    }
+    
+
+    SERVICE = 1;
+    int nsfd[2];
+
     if(connect(usfd,(struct sockaddr *)&userv_addr,userv_len)==-1)
     perror("\n connect ");
     else printf("\nconnect succesful");
@@ -175,6 +179,8 @@ int main()
         recv(as_sfd,buf,MAX,0);
         if(strncmp(buf,"red",3)==0) break;
     }
+    send(as_sfd,"ok",sizeof("ok"),0);
+    
     SERVICE = 0;
     send(nsfd[0],"ser",sizeof("ser"),0);
     send(nsfd[1],"ser",sizeof("ser"),0);

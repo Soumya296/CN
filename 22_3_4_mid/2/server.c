@@ -58,13 +58,14 @@ int SERVICE = 1;
 
 void * service(void * fd)
 {
+    printf("thread service...\n");
     int nsfd = *(int*) fd;
     char buf[MAX];
     int sz;
     while(1)
     {
-        send(nsfd,"hi",strlen("hi"),0);
         if(SERVICE == 0) break;
+        if(send(nsfd,"hi",strlen("hi"),0)<0) printf("Sending faield\n");
         recv(nsfd,buf,MAX,0);
         printf("From %s\n",buf);
     }
@@ -132,6 +133,29 @@ int main()
 
     int as_sfd = accept(s_sfd,(struct sockaddr *)&address, (socklen_t*)&addrlen);
 
+    int nsfd[2];
+    nsfd[0] = accept(c_sfd,(struct sockaddr *)&address, (socklen_t*)&addrlen);
+    nsfd[1] = accept(c_sfd,(struct sockaddr *)&address, (socklen_t*)&addrlen);
+
+    pthread_t threads[2];
+    for(int i = 0; i<2; i++)
+    {
+        pthread_create(&threads[i],NULL,service,(void *) &nsfd[i]);
+    }
+
+    for(int i = 0; i<2; i++)
+    {
+        pthread_join(threads[i],NULL);
+    }
+
+    
+    /*Maintenance Time*/
+    SERVICE = 0;
+    char buf[MAX] = "AS";
+    send(nsfd[0],buf,sizeof(buf),0);
+    send(nsfd[1],buf,sizeof(buf),0);
+    send(as_sfd,buf,sizeof(buf),0);
+
     /*Unix Domain socket Creation*/
     int usfd;
     struct sockaddr_un userv_addr,ucli_addr;
@@ -149,40 +173,26 @@ int main()
     int nusfd;
     nusfd=accept(usfd, (struct sockaddr *)&ucli_addr, &ucli_len);
 
-    
-    int nsfd[2];
-    nsfd[0] = accept(c_sfd,(struct sockaddr *)&address, (socklen_t*)&addrlen);
-    nsfd[1] = accept(c_sfd,(struct sockaddr *)&address, (socklen_t*)&addrlen);
-
-    pthread_t threads[2];
-    for(int i = 0; i<2; i++)
-    {
-        pthread_create(&threads[i],NULL,service,(void *) &nsfd[i]);
-    }
-
-    for(int i = 0; i<2; i++)
-    {
-        pthread_join(threads[i],NULL);
-    }
-
-    sleep(5);
-    /*Maintenance Time*/
-    SERVICE = 0;
-    char buf[MAX] = "AS";
-    send(nsfd[0],buf,sizeof(buf),0);
-    send(nsfd[1],buf,sizeof(buf),0);
-    send(as_sfd,buf,sizeof(buf),0);
-
     for(int i=0; i<2; i++)
     {
         send_fd(nusfd,nsfd[i]);
     }
+
     printf("Going for Maintenance\n");
+    sleep(10);
     
-    SERVICE = 1;
+    
     printf("Ready to Serve\n");
     sprintf(buf,"red");
     send(as_sfd,buf,sizeof(buf),0);
+    
+    while(1)
+    {
+        recv(as_sfd,buf,MAX,0);
+        if(strncmp(buf,"ok",2)==0) break;
+    }
+    
+    SERVICE = 1;
 
     sleep(3);
 
