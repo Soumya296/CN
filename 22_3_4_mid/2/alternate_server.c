@@ -18,22 +18,10 @@
 
 /*Global variable for service*/
 int SERVICE = 0;
+int as_sfd;
+int nsfd[2];
+int usfd;
 
-void * service(void * fd)
-{
-    printf("thread service...\n");
-    int nsfd = *(int*) fd;
-    char buf[MAX];
-    int sz;
-    while(1)
-    {
-        if(SERVICE == 0) break;
-        if(send(nsfd,"hi",strlen("hi"),0)<0) printf("Sending faield\n");
-        recv(nsfd,buf,MAX,0);
-        printf("From %s\n",buf);
-    }
-    pthread_exit(NULL);
-}
 
 int send_fd(int socket, int fd_to_send)
 {
@@ -115,9 +103,46 @@ int recv_fd(int socket)
     return -1;
 }
 
+void * service(void * fd)
+{
+    printf("thread service...\n");
+    int nsfd = *(int*) fd;
+    char buf[MAX];
+    int sz;
+    while(1)
+    {
+        if(SERVICE == 0) break;
+        recv(nsfd,buf,MAX,0);
+        printf("From %s\n",buf);
+    }
+    pthread_exit(NULL);
+}
+
+void * resume()
+{
+    char buf[1024];
+
+    while(1)
+    {
+        recv(as_sfd,buf,MAX,0);
+        if(strncmp(buf,"red",3)==0) break;
+    }
+    if(strncmp(buf,"red",3)==0)
+        {printf("Server ready to resume\n");
+        send(as_sfd,"ok",sizeof("ok"),0);
+
+        SERVICE = 0;
+        send(nsfd[0],"ser",sizeof("ser"),0);
+        send(nsfd[1],"ser",sizeof("ser"),0);
+
+        send_fd(usfd,nsfd[0]);
+        send_fd(usfd,nsfd[1]);
+        pthread_exit(NULL);}
+}
+
 int main()
 {
-    int as_sfd = socket(AF_INET,SOCK_STREAM, 0);
+    as_sfd = socket(AF_INET,SOCK_STREAM, 0);
 
     struct sockaddr_in address;
     address.sin_family = AF_INET;
@@ -132,7 +157,7 @@ int main()
     else printf("\nConnection to Server Successful\n");
 
     /*Unix Domain Sockets*/
-    int usfd;
+    
     struct sockaddr_un userv_addr;
     int userv_len,ucli_len;
     usfd = socket(AF_UNIX, SOCK_STREAM, 0);
@@ -150,38 +175,29 @@ int main()
         recv(as_sfd,buf,MAX,0);
         if(strncmp(buf,"AS",2)==0) break;
     }
-    
 
     SERVICE = 1;
-    int nsfd[2];
+    
 
     if(connect(usfd,(struct sockaddr *)&userv_addr,userv_len)==-1)
     perror("\n connect ");
-    else printf("\nconnect succesful");
+    else printf("\nconnect succesful\n");
 
     for(int i=0; i<2; i++)
     {
         nsfd[i] = recv_fd(usfd);
     }
 
-    pthread_t threads[2];
+    pthread_t threads[3];
     for(int i = 0; i<2; i++)
     {
         pthread_create(&threads[i],NULL,service,&nsfd[i]);
     }
+    pthread_create(&threads[2],NULL,resume,NULL);
     for(int i = 0; i<2; i++)
     {
         pthread_join(threads[i],NULL);
     }
-
-    while(1)
-    {
-        recv(as_sfd,buf,MAX,0);
-        if(strncmp(buf,"red",3)==0) break;
-    }
-    send(as_sfd,"ok",sizeof("ok"),0);
-    
-    SERVICE = 0;
-    send(nsfd[0],"ser",sizeof("ser"),0);
-    send(nsfd[1],"ser",sizeof("ser"),0);
+    pthread_join(threads[2],NULL);
+   
 }

@@ -43,6 +43,7 @@ int main()
         recv(c_sfd,msg,MAX,0);
         if(strncmp(msg,"AS",2)==0 || strncmp(msg,"ser",3)==0)
         {
+            printf("Received : %s\nHence wait for 5 sec", msg);
             sleep(5);
         }
     }

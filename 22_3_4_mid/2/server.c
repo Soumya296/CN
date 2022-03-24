@@ -51,7 +51,51 @@ int send_fd(int socket, int fd_to_send)
     return sendmsg(socket, &socket_message, 0);
 }
 
-
+int recv_fd(int socket)
+{
+    int sent_fd, available_ancillary_element_buffer_space;
+    struct msghdr socket_message;
+    struct iovec io_vector[1];
+    struct cmsghdr *control_message = NULL;
+    char message_buffer[1];
+    char ancillary_element_buffer[CMSG_SPACE(sizeof(int))];
+    /* start clean */
+    memset(&socket_message, 0, sizeof(struct msghdr));
+    memset(ancillary_element_buffer, 0, CMSG_SPACE(sizeof(int)));
+    /* setup a place to fill in message contents */
+    io_vector[0].iov_base = message_buffer;
+    io_vector[0].iov_len = 1;
+    socket_message.msg_iov = io_vector;
+    socket_message.msg_iovlen = 1;
+    /* provide space for the ancillary data */
+    socket_message.msg_control = ancillary_element_buffer;
+    socket_message.msg_controllen = CMSG_SPACE(sizeof(int));
+    if(recvmsg(socket, &socket_message, MSG_CMSG_CLOEXEC) < 0)
+    return -1;
+    if(message_buffer[0] != 'F')
+    {
+    /* this did not originate from the above function */
+    return -1;
+    }
+    if((socket_message.msg_flags & MSG_CTRUNC) == MSG_CTRUNC)
+    {
+    /* we did not provide enough space for the ancillary element array */
+    return -1;
+    } 
+    /* iterate ancillary elements */
+    for(control_message = CMSG_FIRSTHDR(&socket_message);
+    control_message != NULL;
+    control_message = CMSG_NXTHDR(&socket_message, control_message))
+    {
+    if( (control_message->cmsg_level == SOL_SOCKET) &&
+    (control_message->cmsg_type == SCM_RIGHTS) )
+    {
+    sent_fd = *((int *) CMSG_DATA(control_message));
+    return sent_fd;
+    }
+    }
+    return -1;
+}
 
 /*Service Glabal Var*/
 int SERVICE = 1;
@@ -69,6 +113,13 @@ void * service(void * fd)
         recv(nsfd,buf,MAX,0);
         printf("From %s\n",buf);
     }
+    pthread_exit(NULL);
+}
+
+void * maintainance()
+{
+    sleep(5);
+    SERVICE = 0;
     pthread_exit(NULL);
 }
 
@@ -102,6 +153,21 @@ int main()
 		perror("listen"); 
 		exit(EXIT_FAILURE); 
 	}
+
+    int usfd;
+    struct sockaddr_un userv_addr,ucli_addr;
+    int userv_len,ucli_len;
+    usfd = socket(AF_UNIX , SOCK_STREAM , 0);
+    bzero(&userv_addr,sizeof(userv_addr));
+    userv_addr.sun_family = AF_UNIX;
+    strcpy(userv_addr.sun_path, ADDRESS);
+    unlink(ADDRESS);
+    userv_len = sizeof(userv_addr);
+    if(bind(usfd, (struct sockaddr *)&userv_addr, userv_len)==-1)
+        perror("server: bind");
+    listen(usfd, 3);
+    ucli_len=sizeof(ucli_addr);
+    int nusfd;
 
     /*Socket for clients*/
     int c_sfd = socket(AF_INET, SOCK_STREAM, 0);
@@ -137,40 +203,32 @@ int main()
     nsfd[0] = accept(c_sfd,(struct sockaddr *)&address, (socklen_t*)&addrlen);
     nsfd[1] = accept(c_sfd,(struct sockaddr *)&address, (socklen_t*)&addrlen);
 
-    pthread_t threads[2];
+    pthread_t threads[3];
     for(int i = 0; i<2; i++)
     {
         pthread_create(&threads[i],NULL,service,(void *) &nsfd[i]);
     }
 
+    pthread_create(&threads[2],NULL,maintainance,NULL);
+
     for(int i = 0; i<2; i++)
     {
         pthread_join(threads[i],NULL);
     }
-
+    pthread_join(threads[2],NULL);
     
     /*Maintenance Time*/
-    SERVICE = 0;
     char buf[MAX] = "AS";
-    send(nsfd[0],buf,sizeof(buf),0);
-    send(nsfd[1],buf,sizeof(buf),0);
-    send(as_sfd,buf,sizeof(buf),0);
+    if(SERVICE == 0){
+        
+        send(nsfd[0],buf,sizeof(buf),0);
+        send(nsfd[1],buf,sizeof(buf),0);
+        send(as_sfd,buf,sizeof(buf),0);
+    }
+    
 
     /*Unix Domain socket Creation*/
-    int usfd;
-    struct sockaddr_un userv_addr,ucli_addr;
-    int userv_len,ucli_len;
-    usfd = socket(AF_UNIX , SOCK_STREAM , 0);
-    bzero(&userv_addr,sizeof(userv_addr));
-    userv_addr.sun_family = AF_UNIX;
-    strcpy(userv_addr.sun_path, ADDRESS);
-    unlink(ADDRESS);
-    userv_len = sizeof(userv_addr);
-    if(bind(usfd, (struct sockaddr *)&userv_addr, userv_len)==-1)
-        perror("server: bind");
-    listen(usfd, 3);
-    ucli_len=sizeof(ucli_addr);
-    int nusfd;
+    
     nusfd=accept(usfd, (struct sockaddr *)&ucli_addr, &ucli_len);
 
     for(int i=0; i<2; i++)
@@ -191,10 +249,13 @@ int main()
         recv(as_sfd,buf,MAX,0);
         if(strncmp(buf,"ok",2)==0) break;
     }
-    
+
     SERVICE = 1;
 
     sleep(3);
+
+    nsfd[0] = recv_fd(nusfd);
+    nsfd[1] = recv_fd(nusfd);
 
     for(int i = 0; i<2; i++)
     {
