@@ -26,6 +26,7 @@ void * service(void * fd)
     int sz;
     while(1)
     {
+        // send(nsfd,"rand",strlen("rand"),0);
         if(SERVICE == 0) break;
         recv(nsfd,buf,MAX,0);
         printf("From %s\n",buf);

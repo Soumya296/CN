@@ -32,6 +32,7 @@ int main()
     else printf("\nConnection to Server Successful\n");
 
     char buf[MAX] = "Client 1\n";
+    send(c_sfd,buf,sizeof(buf),0);
     char msg[MAX];
 
     while(1)
@@ -41,7 +42,9 @@ int main()
         {
             sleep(5);
         }
-        send(c_sfd,buf,MAX,0);
+        printf("Enter the msg\n");
+        scanf("%s",buf);
+        send(c_sfd,buf,sizeof(buf),0);
         sleep(3);
     }
 }

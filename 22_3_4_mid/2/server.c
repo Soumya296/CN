@@ -58,11 +58,12 @@ int SERVICE = 1;
 
 void * service(void * fd)
 {
-    int nsfd = * (int *) fd;
+    int nsfd = *(int*) fd;
     char buf[MAX];
     int sz;
     while(1)
     {
+        send(nsfd,"hi",strlen("hi"),0);
         if(SERVICE == 0) break;
         recv(nsfd,buf,MAX,0);
         printf("From %s\n",buf);
@@ -156,7 +157,7 @@ int main()
     pthread_t threads[2];
     for(int i = 0; i<2; i++)
     {
-        pthread_create(&threads[i],NULL,service,&nsfd[i]);
+        pthread_create(&threads[i],NULL,service,(void *) &nsfd[i]);
     }
 
     for(int i = 0; i<2; i++)
@@ -164,7 +165,7 @@ int main()
         pthread_join(threads[i],NULL);
     }
 
-    sleep(3);
+    sleep(5);
     /*Maintenance Time*/
     SERVICE = 0;
     char buf[MAX] = "AS";
@@ -187,7 +188,7 @@ int main()
 
     for(int i = 0; i<2; i++)
     {
-        pthread_create(&threads[i],NULL,service,&nsfd[i]);
+        pthread_create(&threads[i],NULL,service,(void *) &nsfd[i]);
     }
 
     for(int i = 0; i<2; i++)

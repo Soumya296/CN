@@ -32,16 +32,18 @@ int main()
     else printf("\nConnection to Server Successful\n");
 
     char buf[MAX] = "Client 2\n";
+    send(c_sfd,buf,sizeof(buf),0);
     char msg[MAX];
 
     while(1)
     {
+        printf("Enter the msg\n");
+        scanf("%s",buf);
+        send(c_sfd,buf,sizeof(buf),0);
         recv(c_sfd,msg,MAX,0);
         if(strncmp(msg,"AS",2)==0 || strncmp(msg,"ser",3)==0)
         {
             sleep(5);
         }
-        send(c_sfd,buf,MAX,0);
-        sleep(3);
     }
 }
