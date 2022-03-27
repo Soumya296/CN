@@ -19,7 +19,7 @@
 #define No_of_Customer 2
 
 int customers[No_of_Customer];
-char * parcels[5];
+char parcels[5][1024];
 int p = 0;
 
 void * service(void * fd)
@@ -31,7 +31,8 @@ void * service(void * fd)
     {
         sz = recv(dfd,parcel,1024,0);
         printf("\nReceived parcel as : %s\n",parcel);
-        parcels[p++] = parcel;
+        sprintf(parcels[p++],parcel);
+        // parcels[p++] = parcel;
     }
 }
 
@@ -169,6 +170,8 @@ int main()
         send(customers[i],buf,sizeof(buf),0);
         sz = recv(customers[i],buf,1024,0);
         printf("customer has coupon : %s\n", buf);
+
+        printf("%s\n",parcels[i]);
 
         printf("Packet Delivered to the customer with coupon : %d\n",atoi(buf));
         send(customers[i],parcels[i],sizeof(parcels[i]),0);
