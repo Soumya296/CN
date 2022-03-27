@@ -156,29 +156,22 @@ int main()
 
     pthread_t thread;
     pthread_create(&thread,NULL,service,(void *)&dsfd);
+    pthread_join(thread,NULL);
+    while(p<No_of_Customer-1){}
 
     char buf[1024] = "pid";
     int sz;
     for(int i=0; i<No_of_Customer; i++)
     {
         customers[i] = recv_fd(usfd);
-        printf("Received CUstomers socket descriptor : %d\n",customers[i]);
-        sleep(2);
-        send(customers[i],buf, sizeof(buf),0);
-        sz = recv(customers[i],buf, 1024,0);
-        
+        printf("\nReceived Customers socket descriptor : %d\n",customers[i]);
+        sprintf(buf,"pid");
+        send(customers[i],buf,sizeof(buf),0);
+        sz = recv(customers[i],buf,1024,0);
         printf("customer has coupon : %s\n", buf);
 
-        for(int j=0; j<p; j++)
-        {
-            printf("%s\n",parcels[j]);
-            if(strncmp(parcels[j],buf,4)==0)
-            {
-                printf("Packet Delivered to the customer with coupon : %d\n",atoi(buf));
-                send(customers[i],parcels[j],sizeof(parcels[i]),0);
-                break;
-            }
-        }
+        printf("Packet Delivered to the customer with coupon : %d\n",atoi(buf));
+        send(customers[i],parcels[i],sizeof(parcels[i]),0);
         
     }
 
