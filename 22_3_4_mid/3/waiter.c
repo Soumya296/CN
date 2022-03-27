@@ -11,6 +11,7 @@
 #include <sys/types.h>
 #include <signal.h>
 #include <pthread.h>
+#include <string.h>
 
 #define MAX 1024
 #define port 8082
@@ -26,24 +27,33 @@ pid_t pid_b;
 
 void * service(void * fd)
 {
+    char buf[1024] = "pid";
+    char parcel[1024] = "parcel";
+    int sz;
     int cfd = *(int *) fd;
 
-    send(cfd,"pid",sizeof("pid"),0);
-    char buf[1024];
-    int sz = recv(cfd,buf,1024,0);
-    int pid = atoi(buf);
-
-    char * parcel;
-    sprintf(parcel,"%d",pid);
-
-    send(cfd,"combo",sizeof("combo"),0);
-    sz = recv(cfd,buf,1024,0);
-    printf("Took Order for combo %s",buf);
-
-    strcat(parcel, strcat(" combo ",buf));
     
+    sprintf(buf,"pid");
+    send(cfd,buf,sizeof(buf),0);
 
-    printf("Preparing Food\n");
+    
+    
+    sz = recv(cfd,buf,1024,0);
+    int pid = atoi(buf);
+    printf("Coupon Number : %d\n",atoi(buf));
+
+    
+    // sprintf(parcel,"%d",pid);
+
+    sprintf(buf,"combo");
+    send(cfd,buf,sizeof(buf),0);
+    sz = recv(cfd,buf,1024,0);
+    printf("Took Order for combo %s\n",buf);
+
+    // strcat(parcel, strcat(" combo ",buf));
+    sprintf(parcel,"%d combo : %d", pid, atoi(buf));
+
+    printf("Preparing Food...\n");
     sleep(3);
     send(ndsfd,parcel,sizeof(parcel),0);
     printf("Parcel Sent to the delivery desk with coupon number %d\n",pid);
@@ -51,7 +61,7 @@ void * service(void * fd)
     /*Notify the Billing Desk*/
     kill(pid_b, SIGUSR1);
     printf("Billing Desk Notified\n");
-    
+
 }
 
 
@@ -164,7 +174,7 @@ int main()
     dsfd = socket(AF_INET, SOCK_STREAM,0);
 
     struct sockaddr_in addr_w;
-    addr_w.sin_addr.s_addr = inet_addr("127.0.0.2");
+    addr_w.sin_addr.s_addr = inet_addr("127.0.0.1");
     addr_w.sin_family = AF_INET;
     addr_w.sin_port = htons(port);
 
@@ -184,22 +194,30 @@ int main()
 		exit(EXIT_FAILURE); 
 	}
 
-    if (listen(dsfd, 1) < 0) 
+    if (listen(dsfd, 2) < 0) 
 	{ 
 		perror("listen"); 
 		exit(EXIT_FAILURE); 
 	}
 
     
-    if(ndsfd = accept(dsfd,(struct sockaddr *)&addr_d,&addrlen))
-    printf("Connection with delivery desk established\n");
-    printf(ndsfd);
+    if((ndsfd = accept(dsfd,(struct sockaddr *)&addr_d,&addrlen))<0)
+    {
+        "Connection Failure with Delivery desk\n";
+    }
+    else
+    {
+        printf("Connection with delivery desk established : ");
+        printf("with socket : %d\n",ndsfd);
+    }
 
     pthread_t threads[No_of_Customer];
-
-    for(int i=0; i<2; i++)
+    
+    for(int i=0; i<No_of_Customer; i++)
     {
         customers[i] = recv_fd(usfd);
+        printf("\n\nCustomer socket descriptor : %d\n",customers[i]);
+
         pthread_create(&threads[i],NULL,service,(void *) &customers[i]);
     }
 

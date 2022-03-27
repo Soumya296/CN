@@ -18,7 +18,7 @@
 int bsfd, sz;
 char buf[1024];
 int combo = -1;
-char * pid;
+char pid[1024];
 
 void process()
 {
@@ -30,7 +30,7 @@ void process()
             if(combo == -1)
             {
                 combo = rand()%5 + 1;
-                printf("Ordering combo : %s",combo);
+                printf("Ordering combo : %d\n",combo);
             }
             sprintf(buf,"%d",combo);
             send(bsfd,buf,sizeof(buf),0);
@@ -38,17 +38,19 @@ void process()
         else if(strncmp(buf,"pay",sizeof("pay"))==0)
         {
             sz = recv(bsfd,buf,1024,0);
-            send(bsfd,buf,sizeof(buf),0);
+            printf("paying : %d\n",atoi(buf));
+            send(bsfd,buf,sz,0);
         }
         else if(strncmp(buf,"pid",sizeof("pid"))==0)
         {
             sprintf(buf,"%d",getpid());
+            printf("My coupon number : %s\n",buf);
             send(bsfd,buf,sizeof(buf),0);
         }
         else{
             if(strncmp(buf,pid,sizeof(pid))==0)
             printf("Received the parcel\n");
-            return;
+            break;
         }
     }
 }
@@ -64,9 +66,14 @@ int main()
     addr_bill.sin_family = AF_INET;
     addr_bill.sin_port = htons(port);
 
-    int addrlen = sizeof(addr_bill);
-    if(accept(bsfd,(struct sockaddr *)&addr_bill, &addrlen))
-    printf("Connection to the billing desk sucessful\n");
+	int addrlen = sizeof(addr_bill);
+
+    if(connect(bsfd,(struct sockaddr *)&addr_bill,addrlen)<0)
+    {
+        printf("Conenction failed\n");
+    }
+    else
+    printf("Connection to biil desk Successful\n");
 
     process();
     return 0;

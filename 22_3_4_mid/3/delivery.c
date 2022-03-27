@@ -30,8 +30,8 @@ void * service(void * fd)
     for(int i=0; i<No_of_Customer; i++)
     {
         sz = recv(dfd,parcel,1024,0);
-        parcel[sz] = '\0';
-        sprintf(parcels[p++],parcel);
+        printf("\nReceived parcel as : %s\n",parcel);
+        parcels[p++] = parcel;
     }
 }
 
@@ -137,40 +137,45 @@ int main()
     int dsfd = socket(AF_INET, SOCK_STREAM,0);
 
     struct sockaddr_in addr_w;
-    addr_w.sin_addr.s_addr = inet_addr("127.0.0.2");
+    addr_w.sin_addr.s_addr = inet_addr("127.0.0.1");
     addr_w.sin_family = AF_INET;
     addr_w.sin_port = htons(port);
     int addrlen = sizeof(addr_w);
 
    
 
-    if(accept(dsfd,(struct sockaddr *)&addr_w,&addrlen))
-        printf("Connection to waiter Successful\n");
+    if(connect(dsfd,(struct sockaddr *)&addr_w,addrlen)<0)
+    {
+        printf("Conenction failed\n");
+    }
+    else
+    printf("Connection to waiter Successful\n");
+        
 
     sleep(20);
 
     pthread_t thread;
-    pthread_create(&thread,NULL,service,&dsfd);
-    pthread_join(thread,NULL);
+    pthread_create(&thread,NULL,service,(void *)&dsfd);
 
     char buf[1024] = "pid";
     int sz;
-    for(int i; i<No_of_Customer; i++)
+    for(int i=0; i<No_of_Customer; i++)
     {
         customers[i] = recv_fd(usfd);
+        printf("Received CUstomers socket descriptor : %d\n",customers[i]);
         sleep(2);
         send(customers[i],buf, sizeof(buf),0);
         sz = recv(customers[i],buf, 1024,0);
+        
+        printf("customer has coupon : %s\n", buf);
 
-        char * pid;
-        sprintf(pid, "%d", atoi(buf));
-
-        for(int i=0; i<p; i++)
+        for(int j=0; j<p; j++)
         {
-            if(strncmp(parcels[i],pid,sizeof(pid))==0)
+            printf("%s\n",parcels[j]);
+            if(strncmp(parcels[j],buf,4)==0)
             {
                 printf("Packet Delivered to the customer with coupon : %d\n",atoi(buf));
-                send(customers[i],parcels[i],sizeof(parcels[i]),0);
+                send(customers[i],parcels[j],sizeof(parcels[i]),0);
                 break;
             }
         }

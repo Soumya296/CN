@@ -146,7 +146,7 @@ int main()
 		exit(EXIT_FAILURE); 
 	}
 
-    if (listen(bsfd, 1) < 0) 
+    if (listen(bsfd, 3) < 0) 
 	{ 
 		perror("listen"); 
 		exit(EXIT_FAILURE); 
@@ -170,34 +170,43 @@ int main()
 	for(int i=0; i<2.; i++)
 	{
 		nusfd[i] = accept(usfd, (struct sockaddr *)&ucli_addr, &ucli_len);
+        printf("Connection Successful on UDS\n");
 	}
 
 	/*Accepting Customer*/
 	
 	for(int i=0; i<No_of_Customer; i++)
 	{
-		if(csfd[i] = accept(bsfd,(struct sockaddr *)&addr_c,&addrlen))
+		if((csfd[i] = accept(bsfd,(struct sockaddr *)&addr_c, &addrlen))<0)
+        {
+            perror("connection failed for customer\n");
+        }
+        else
 		{
 			printf("Customer %d Joined Successfully\n",i+1);
 			printf("Choose among 5 combos available\n");
 			
-			char buf[50] = "combo";
+			char buf[1024] = "combo";
 			send(csfd[i],buf,sizeof(buf),0);
-			recv(csfd[i],buf,50,0);
+			recv(csfd[i],buf,1024,0);
 
 			int combo = atoi(buf);
 			printf("Combo chosen : %d\n",combo--);
-			printf("Pay: %d", price[combo]);
+			printf("Pay: %d\n", price[combo]);
 			
-            send(csfd[i],"pay",sizeof("pay"),0);
+            sprintf(buf,"pay");
+            send(csfd[i],buf,sizeof(buf),0);
 			if(combo<=2)
 			{
 				sprintf(buf,"300");
 				send(csfd[i],buf,sizeof(buf),0);
 			}
-			else send(csfd[i], "500",sizeof("500"),0);
+			else
+            {   sprintf(buf,"500");
+                send(csfd[i], buf,sizeof(buf),0);}
 
-			recv(csfd[i],buf,50,0);
+			recv(csfd[i],buf,1024,0);
+            printf("Paid amounnt %d \n",atoi(buf));
 			if(atoi(buf) != price[combo]){printf("exact amount not paid, terminating order!!\n");exit;}
 			else{
 				printf("Payment Successful\nHanding over to the waiter\n");
@@ -207,7 +216,11 @@ int main()
 
 	}
 
+    close(bsfd);
+
 	while(wc < No_of_Customer){}
+
+    
 
 	return 0;
 }
