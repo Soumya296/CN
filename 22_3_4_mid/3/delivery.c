@@ -173,7 +173,7 @@ int main()
 
         printf("%s\n",parcels[i]);
 
-        printf("Packet Delivered to the customer with coupon : %d\n",atoi(buf));
+        printf("Packet Delivered to the customer with coupon : %d\n\n",atoi(buf));
         send(customers[i],parcels[i],sizeof(parcels[i]),0);
         
     }

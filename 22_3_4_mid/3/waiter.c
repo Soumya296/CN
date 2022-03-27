@@ -60,7 +60,7 @@ void * service(void * fd)
 
     /*Notify the Billing Desk*/
     kill(pid_b, SIGUSR1);
-    printf("Billing Desk Notified\n");
+    printf("Billing Desk Notified\n\n");
 
 }
 

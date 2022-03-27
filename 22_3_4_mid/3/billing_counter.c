@@ -220,7 +220,7 @@ int main()
 
 	while(wc < No_of_Customer){}
 
-    
+    printf("Do Visit again...\nThank you\n\n\n");
 
 	return 0;
 }

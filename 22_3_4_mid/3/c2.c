@@ -29,7 +29,7 @@ void process()
         {
             if(combo == -1)
             {
-                combo = rand()%4 + 1;
+                combo = rand()%3 + 1;
                 printf("Ordering combo : %d\n",combo);
             }
             sprintf(buf,"%d",combo);
@@ -50,7 +50,7 @@ void process()
         else{
             printf("Received : %s\n",buf);
             if(strncmp(buf,pid,4)==0)
-            printf("\n\nReceived the Correct parcel\n");
+            printf("\n\nReceived the Correct parcel\n\n\n");
             break;
         }
     }

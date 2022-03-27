@@ -50,7 +50,7 @@ void process()
         else{
             printf("Received : %s\n",buf);
             if(strncmp(buf,pid,4)==0)
-            printf("\n\nReceived the Correct parcel\n");
+            printf("\n\nReceived the Correct parcel\n\n\n");
             break;
         }
     }
