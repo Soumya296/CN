@@ -24,7 +24,7 @@
 using namespace std;
 
 int main(){
-    int rsfd=socket (AF_INET, SOCK_RAW, IPPROTO_TCP);	
+    int rsfd=socket (AF_INET, SOCK_RAW, 2);	
     int opt=1;
     setsockopt(rsfd, IPPROTO_IP, SO_BROADCAST, &opt, sizeof(int));
     struct sockaddr_in client;

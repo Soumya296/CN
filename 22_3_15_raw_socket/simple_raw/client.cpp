@@ -24,7 +24,7 @@
 using namespace std;
 
 int main(){
-    int rsfd=socket (AF_INET, SOCK_RAW, IPPROTO_TCP);	
+    int rsfd=socket (AF_INET, SOCK_RAW,2);	
     char buff[100];
     recvfrom(rsfd,buff,100,0,NULL,NULL);
     struct iphdr* ip;
