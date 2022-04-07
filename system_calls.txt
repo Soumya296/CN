@@ -23,3 +23,11 @@ sem_post
 sigaction
 kill
 raise
+socket
+setsockopt
+ace
+bind
+listen
+connect
+accept
+select
