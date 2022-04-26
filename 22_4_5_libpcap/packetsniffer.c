@@ -78,7 +78,7 @@ int main()
 	}
 	
 	//Put the device in sniff loop
-	pcap_loop(handle , -1 , process_packet , NULL);
+	pcap_loop(handle , 0 , process_packet , NULL);
 	
 	return 0;	
 }
